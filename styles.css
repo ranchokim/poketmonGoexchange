@@ -1,14 +1,15 @@
 :root {
-  --bg: #080d1a;
-  --bg-soft: #111a2e;
-  --card: rgba(19, 29, 54, 0.85);
-  --card-border: rgba(129, 140, 248, 0.22);
-  --text: #e5edff;
-  --muted: #a9b9de;
-  --primary: #7c9dff;
-  --primary-dark: #5b79d8;
-  --ok: #22c55e;
-  --open: #38bdf8;
+  --bg: #f4f8ff;
+  --card: #ffffff;
+  --card-border: #d9e4ff;
+  --text: #1b2a4a;
+  --muted: #5c6f98;
+  --primary: #4f7cff;
+  --primary-dark: #355fd8;
+  --open-bg: #e0f2fe;
+  --open-text: #0369a1;
+  --done-bg: #dcfce7;
+  --done-text: #166534;
 }
 
 * {
@@ -17,43 +18,29 @@
 
 body {
   margin: 0;
+  min-height: 100vh;
   color: var(--text);
   font-family: "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: radial-gradient(circle at 12% 20%, #273b74 0%, #0c1427 50%, #080d1a 100%);
-  min-height: 100vh;
-}
-
-.bg-blur {
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(circle at 85% 18%, rgba(59, 130, 246, 0.22), transparent 40%),
-    radial-gradient(circle at 18% 78%, rgba(45, 212, 191, 0.15), transparent 33%);
-  pointer-events: none;
-}
-
-header,
-main {
-  position: relative;
-  z-index: 1;
+  background: linear-gradient(180deg, #eef4ff 0%, #f9fbff 100%);
 }
 
 header {
   text-align: center;
-  padding: 2.4rem 1rem 1rem;
+  padding: 2.1rem 1rem 1.2rem;
 }
 
 header h1 {
   margin: 0;
-  font-size: clamp(1.6rem, 3.3vw, 2.25rem);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
 }
 
 header p {
-  margin-top: 0.55rem;
   color: var(--muted);
+  margin: 0.55rem 0 0;
 }
 
 main {
-  width: min(1020px, 94vw);
+  width: min(1020px, 95vw);
   margin: 0 auto 2rem;
   display: grid;
   gap: 1rem;
@@ -62,20 +49,19 @@ main {
 .card {
   background: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 18px;
+  border-radius: 16px;
   padding: 1rem;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 15px 40px rgba(4, 8, 20, 0.35);
+  box-shadow: 0 10px 24px rgba(56, 85, 156, 0.09);
 }
 
 .hero-card {
-  border-image: linear-gradient(90deg, #6366f1, #22d3ee) 1;
+  background: linear-gradient(135deg, #ffffff 0%, #f4f8ff 100%);
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0.85rem;
 }
 
 .full-width {
@@ -84,7 +70,7 @@ main {
 
 label {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.33rem;
   font-size: 0.92rem;
   color: var(--muted);
 }
@@ -97,11 +83,11 @@ button {
 
 input,
 textarea {
-  border: 1px solid #2f416f;
-  background: #111a33;
-  color: var(--text);
+  border: 1px solid #ccd9fa;
   border-radius: 10px;
-  padding: 0.65rem 0.72rem;
+  padding: 0.64rem 0.72rem;
+  background: #fff;
+  color: var(--text);
 }
 
 button {
@@ -109,23 +95,21 @@ button {
   border-radius: 10px;
   padding: 0.65rem 0.9rem;
   background: var(--primary);
-  color: #081029;
+  color: white;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.2s ease;
 }
 
 button:hover {
   background: var(--primary-dark);
-  transform: translateY(-1px);
 }
 
 .ad-slot {
   min-height: 110px;
-  border: 1.5px dashed #5b6aa6;
+  border: 2px dashed #a7bdfb;
   border-radius: 14px;
-  background: rgba(15, 25, 49, 0.8);
-  color: #b7c7ef;
+  background: #f3f7ff;
+  color: #5774b7;
   display: grid;
   place-items: center;
   text-align: center;
@@ -137,15 +121,15 @@ button:hover {
 }
 
 .trade-item {
-  border: 1px solid #2d3f6f;
-  background: #121d38;
+  border: 1px solid #d5e1ff;
   border-radius: 14px;
   padding: 0.95rem;
+  background: #fcfdff;
 }
 
 .trade-item.completed {
-  opacity: 0.86;
-  border-color: #267a4a;
+  border-color: #9dd7af;
+  background: #fbfffc;
 }
 
 .trade-title-row {
@@ -160,20 +144,24 @@ button:hover {
 }
 
 .status {
-  padding: 0.22rem 0.55rem;
+  padding: 0.24rem 0.58rem;
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 700;
 }
 
 .status.open {
-  background: rgba(56, 189, 248, 0.2);
-  color: var(--open);
+  background: var(--open-bg);
+  color: var(--open-text);
 }
 
 .status.done {
-  background: rgba(34, 197, 94, 0.2);
-  color: #86efac;
+  background: var(--done-bg);
+  color: var(--done-text);
+}
+
+.trade-exchange {
+  margin: 0.4rem 0 0.3rem;
 }
 
 .trade-meta {
@@ -182,14 +170,14 @@ button:hover {
 }
 
 .toggle-complete {
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.45rem;
 }
 
 .comment-box,
 .reply-box {
   display: flex;
   gap: 0.45rem;
-  margin-top: 0.5rem;
+  margin-top: 0.55rem;
 }
 
 .comment-box input,
@@ -206,10 +194,10 @@ button:hover {
 
 .comment-item,
 .reply-item {
-  border: 1px solid #334a81;
-  background: #0f1832;
+  border: 1px solid #dce6ff;
   border-radius: 10px;
   padding: 0.55rem;
+  background: #f9fbff;
 }
 
 .reply-list {

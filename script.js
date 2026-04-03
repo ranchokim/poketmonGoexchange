@@ -2,7 +2,6 @@ const tradeForm = document.getElementById("tradeForm");
 const tradeList = document.getElementById("tradeList");
 const searchForm = document.getElementById("searchForm");
 
-let currentTrades = [];
 let currentQuery = { pokemon: "", lat: "", lng: "" };
 
 loadTrades();
@@ -10,20 +9,33 @@ loadTrades();
 tradeForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const pokemon = document.getElementById("pokemonInput").value.trim();
-  const lat = parseFloat(document.getElementById("latInput").value);
-  const lng = parseFloat(document.getElementById("lngInput").value);
+  const wantedPokemon = document.getElementById("wantedPokemonInput").value.trim();
+  const offeredPokemon = document.getElementById("offeredPokemonInput").value.trim();
+  const locationInput = document.getElementById("locationInput").value.trim();
   const description = document.getElementById("descriptionInput").value.trim();
 
-  if (!pokemon || Number.isNaN(lat) || Number.isNaN(lng)) {
-    alert("포켓몬 이름과 좌표를 정확히 입력해 주세요.");
+  if (!wantedPokemon || !offeredPokemon || !locationInput) {
+    alert("받고 싶은 포켓몬, 교환할 포켓몬, 위치를 입력해 주세요.");
+    return;
+  }
+
+  const location = await resolveLocationInput(locationInput);
+  if (!location) {
+    alert("위치를 찾을 수 없습니다. '위도,경도' 또는 정확한 장소명을 입력해 주세요.");
     return;
   }
 
   const response = await fetch("/api/trades", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ pokemon, lat, lng, description }),
+    body: JSON.stringify({
+      wantedPokemon,
+      offeredPokemon,
+      lat: location.lat,
+      lng: location.lng,
+      locationLabel: location.label,
+      description,
+    }),
   });
 
   if (!response.ok) {
@@ -39,12 +51,23 @@ tradeForm.addEventListener("submit", async (event) => {
 searchForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  currentQuery = {
-    pokemon: document.getElementById("searchPokemon").value.trim(),
-    lat: document.getElementById("searchLat").value.trim(),
-    lng: document.getElementById("searchLng").value.trim(),
-  };
+  const pokemon = document.getElementById("searchPokemon").value.trim();
+  const searchLocation = document.getElementById("searchLocation").value.trim();
 
+  let lat = "";
+  let lng = "";
+
+  if (searchLocation) {
+    const location = await resolveLocationInput(searchLocation);
+    if (!location) {
+      alert("검색 위치를 찾을 수 없습니다. '위도,경도' 또는 정확한 장소명을 입력해 주세요.");
+      return;
+    }
+    lat = String(location.lat);
+    lng = String(location.lng);
+  }
+
+  currentQuery = { pokemon, lat, lng };
   await loadTrades(currentQuery);
 });
 
@@ -123,8 +146,8 @@ async function loadTrades({ pokemon = "", lat = "", lng = "" } = {}) {
     return;
   }
 
-  currentTrades = await response.json();
-  renderTrades(currentTrades);
+  const trades = await response.json();
+  renderTrades(trades);
 }
 
 function renderTrades(trades) {
@@ -138,13 +161,14 @@ function renderTrades(trades) {
       (trade) => `
       <article class="trade-item ${trade.isCompleted ? "completed" : ""}">
         <div class="trade-title-row">
-          <h3>${escapeHtml(trade.pokemon)}</h3>
+          <h3>원함: ${escapeHtml(trade.wantedPokemon)}</h3>
           <span class="status ${trade.isCompleted ? "done" : "open"}">
             ${trade.isCompleted ? "교환 완료" : "교환 가능"}
           </span>
         </div>
 
-        <p class="trade-meta">📍 (${Number(trade.lat).toFixed(6)}, ${Number(trade.lng).toFixed(6)}) · ${formatDate(
+        <p class="trade-exchange">내가 줄 포켓몬: <strong>${escapeHtml(trade.offeredPokemon)}</strong></p>
+        <p class="trade-meta">📍 ${escapeHtml(trade.locationLabel || `${Number(trade.lat).toFixed(6)}, ${Number(trade.lng).toFixed(6)}`)} · ${formatDate(
         trade.createdAt,
       )}</p>
         <p>${escapeHtml(trade.description || "(상세 설명 없음)")}</p>
@@ -192,6 +216,35 @@ function renderTrades(trades) {
     `,
     )
     .join("");
+}
+
+async function resolveLocationInput(input) {
+  const coordMatch = input.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+  if (coordMatch) {
+    return {
+      lat: Number(coordMatch[1]),
+      lng: Number(coordMatch[2]),
+      label: `${coordMatch[1]}, ${coordMatch[2]}`,
+    };
+  }
+
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=ko&q=${encodeURIComponent(input)}`,
+    );
+    if (!response.ok) return null;
+
+    const result = await response.json();
+    if (!result.length) return null;
+
+    return {
+      lat: Number(result[0].lat),
+      lng: Number(result[0].lon),
+      label: result[0].display_name || input,
+    };
+  } catch {
+    return null;
+  }
 }
 
 function formatDate(dateString) {
