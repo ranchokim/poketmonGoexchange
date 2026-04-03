@@ -1,12 +1,13 @@
-const STORAGE_KEY = "pokemon-trades-v1";
 const tradeForm = document.getElementById("tradeForm");
 const tradeList = document.getElementById("tradeList");
 const searchForm = document.getElementById("searchForm");
 
-let trades = loadTrades();
-renderTrades(trades);
+let currentTrades = [];
+let currentQuery = { pokemon: "", lat: "", lng: "" };
 
-tradeForm.addEventListener("submit", (event) => {
+loadTrades();
+
+tradeForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const pokemon = document.getElementById("pokemonInput").value.trim();
@@ -19,51 +20,35 @@ tradeForm.addEventListener("submit", (event) => {
     return;
   }
 
-  const trade = {
-    id: crypto.randomUUID(),
-    pokemon,
-    lat,
-    lng,
-    description,
-    createdAt: new Date().toISOString(),
-    comments: [],
-  };
+  const response = await fetch("/api/trades", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pokemon, lat, lng, description }),
+  });
 
-  trades.unshift(trade);
-  saveTrades();
-  renderTrades(trades);
+  if (!response.ok) {
+    const error = await response.json();
+    alert(error.error || "등록 실패");
+    return;
+  }
+
   tradeForm.reset();
+  await loadTrades(currentQuery);
 });
 
-searchForm.addEventListener("submit", (event) => {
+searchForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const searchPokemon = document.getElementById("searchPokemon").value.trim().toLowerCase();
-  const latRaw = document.getElementById("searchLat").value;
-  const lngRaw = document.getElementById("searchLng").value;
+  currentQuery = {
+    pokemon: document.getElementById("searchPokemon").value.trim(),
+    lat: document.getElementById("searchLat").value.trim(),
+    lng: document.getElementById("searchLng").value.trim(),
+  };
 
-  let filtered = [...trades];
-
-  if (searchPokemon) {
-    filtered = filtered.filter((trade) => trade.pokemon.toLowerCase().includes(searchPokemon));
-  }
-
-  if (latRaw && lngRaw) {
-    const baseLat = parseFloat(latRaw);
-    const baseLng = parseFloat(lngRaw);
-
-    if (Number.isNaN(baseLat) || Number.isNaN(baseLng)) {
-      alert("검색 좌표를 숫자로 입력해 주세요.");
-      return;
-    }
-
-    filtered = filtered.filter((trade) => getDistanceKm(baseLat, baseLng, trade.lat, trade.lng) <= 2);
-  }
-
-  renderTrades(filtered);
+  await loadTrades(currentQuery);
 });
 
-tradeList.addEventListener("click", (event) => {
+tradeList.addEventListener("click", async (event) => {
   const target = event.target;
 
   if (target.matches(".add-comment")) {
@@ -72,16 +57,9 @@ tradeList.addEventListener("click", (event) => {
     const message = input.value.trim();
     if (!message) return;
 
-    const trade = trades.find((item) => item.id === tradeId);
-    trade.comments.push({
-      id: crypto.randomUUID(),
-      message,
-      createdAt: new Date().toISOString(),
-      replies: [],
-    });
-
-    saveTrades();
-    renderTrades(trades);
+    await addComment(tradeId, message, null);
+    await loadTrades(currentQuery);
+    return;
   }
 
   if (target.matches(".add-reply")) {
@@ -91,35 +69,89 @@ tradeList.addEventListener("click", (event) => {
     const message = input.value.trim();
     if (!message) return;
 
-    const trade = trades.find((item) => item.id === tradeId);
-    const comment = trade.comments.find((item) => item.id === commentId);
-
-    comment.replies.push({
-      id: crypto.randomUUID(),
-      message,
-      createdAt: new Date().toISOString(),
-    });
-
-    saveTrades();
-    renderTrades(trades);
-  }
-});
-
-function renderTrades(list) {
-  if (!list.length) {
-    tradeList.innerHTML = "<p>등록된 교환 글이 없습니다.</p>";
+    await addComment(tradeId, message, commentId);
+    await loadTrades(currentQuery);
     return;
   }
 
-  tradeList.innerHTML = list
+  if (target.matches(".toggle-complete")) {
+    const tradeId = target.dataset.tradeId;
+    const nextStatus = target.dataset.isCompleted !== "true";
+
+    const response = await fetch(`/api/trades/${tradeId}/complete`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isCompleted: nextStatus }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      alert(error.error || "상태 변경 실패");
+      return;
+    }
+
+    await loadTrades(currentQuery);
+  }
+});
+
+async function addComment(tradeId, message, parentId) {
+  const response = await fetch(`/api/trades/${tradeId}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, parentId }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    alert(error.error || "댓글 저장 실패");
+  }
+}
+
+async function loadTrades({ pokemon = "", lat = "", lng = "" } = {}) {
+  const query = new URLSearchParams();
+  if (pokemon) query.append("pokemon", pokemon);
+  if (lat && lng) {
+    query.append("lat", lat);
+    query.append("lng", lng);
+    query.append("radiusKm", "2");
+  }
+
+  const response = await fetch(`/api/trades?${query.toString()}`);
+
+  if (!response.ok) {
+    tradeList.innerHTML = "<p>데이터를 불러오는 중 오류가 발생했습니다.</p>";
+    return;
+  }
+
+  currentTrades = await response.json();
+  renderTrades(currentTrades);
+}
+
+function renderTrades(trades) {
+  if (!trades.length) {
+    tradeList.innerHTML = "<p>검색 결과가 없습니다.</p>";
+    return;
+  }
+
+  tradeList.innerHTML = trades
     .map(
       (trade) => `
-      <article class="trade-item">
-        <h3>${escapeHtml(trade.pokemon)}</h3>
-        <p class="trade-meta">좌표: (${trade.lat.toFixed(6)}, ${trade.lng.toFixed(6)}) · 작성일: ${formatDate(
+      <article class="trade-item ${trade.isCompleted ? "completed" : ""}">
+        <div class="trade-title-row">
+          <h3>${escapeHtml(trade.pokemon)}</h3>
+          <span class="status ${trade.isCompleted ? "done" : "open"}">
+            ${trade.isCompleted ? "교환 완료" : "교환 가능"}
+          </span>
+        </div>
+
+        <p class="trade-meta">📍 (${Number(trade.lat).toFixed(6)}, ${Number(trade.lng).toFixed(6)}) · ${formatDate(
         trade.createdAt,
       )}</p>
         <p>${escapeHtml(trade.description || "(상세 설명 없음)")}</p>
+
+        <button class="toggle-complete" data-trade-id="${trade.id}" data-is-completed="${trade.isCompleted}">
+          ${trade.isCompleted ? "다시 교환 가능으로 변경" : "교환 완료 처리"}
+        </button>
 
         <div class="comment-box">
           <input data-comment-input="${trade.id}" type="text" placeholder="이 글에 교환 요청 댓글 달기" />
@@ -157,42 +189,17 @@ function renderTrades(list) {
             .join("")}
         </div>
       </article>
-      `,
+    `,
     )
     .join("");
 }
 
-function loadTrades() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveTrades() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
-}
-
-function getDistanceKm(lat1, lng1, lat2, lng2) {
-  const toRad = (value) => (value * Math.PI) / 180;
-  const earthRadiusKm = 6371;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return earthRadiusKm * c;
-}
-
-function formatDate(isoString) {
-  return new Date(isoString).toLocaleString("ko-KR", { hour12: false });
+function formatDate(dateString) {
+  return new Date(dateString).toLocaleString("ko-KR", { hour12: false });
 }
 
 function escapeHtml(value) {
-  return value
+  return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")

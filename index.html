@@ -7,13 +7,14 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="bg-blur"></div>
     <header>
-      <h1>포켓몬GO 교환 게시판</h1>
-      <p>원하는 포켓몬과 교환 가능 좌표를 등록하고, 댓글/답글로 교환 요청을 받아보세요.</p>
+      <h1>🎯 포켓몬GO 교환 허브</h1>
+      <p>원하는 포켓몬/좌표를 등록하고 댓글·답글로 교환을 성사시켜보세요.</p>
     </header>
 
     <main>
-      <section class="card" aria-labelledby="create-title">
+      <section class="card hero-card" aria-labelledby="create-title">
         <h2 id="create-title">교환 글 작성</h2>
         <form id="tradeForm" class="form-grid">
           <label>
@@ -28,7 +29,7 @@
             경도 (longitude)
             <input type="number" id="lngInput" step="0.000001" placeholder="예: 126.9780" required />
           </label>
-          <label>
+          <label class="full-width">
             상세 설명
             <textarea id="descriptionInput" rows="3" placeholder="교환 가능한 시간/조건 등을 적어주세요."></textarea>
           </label>
@@ -38,12 +39,11 @@
 
       <section class="ad-slot" aria-label="구글 애드 영역 상단">
         <p>Google Ad Slot (상단 공백 광고 영역)</p>
-        <!-- Google AdSense 예시 코드: 실제 배포 시 data-ad-client/data-ad-slot 값을 본인 값으로 교체하세요. -->
         <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-xxxxxxxxxxxxxxxx" data-ad-slot="1234567890" data-ad-format="auto" data-full-width-responsive="true"></ins>
       </section>
 
       <section class="card" aria-labelledby="search-title">
-        <h2 id="search-title">검색 (포켓몬 / 좌표 2km 이내)</h2>
+        <h2 id="search-title">검색 (포켓몬 / 좌표 반경 2km)</h2>
         <form id="searchForm" class="form-grid">
           <label>
             포켓몬 이름
@@ -59,7 +59,6 @@
           </label>
           <button type="submit">검색하기</button>
         </form>
-        <p class="hint">좌표를 입력하면 기준점으로부터 반경 2km 이내 글만 검색됩니다.</p>
       </section>
 
       <section class="ad-slot" aria-label="구글 애드 영역 하단">
