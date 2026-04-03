@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>포켓몬GO 교환 게시판</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-blur"></div>
+    <header>
+      <h1>🎯 포켓몬GO 교환 허브</h1>
+      <p>원하는 포켓몬/좌표를 등록하고 댓글·답글로 교환을 성사시켜보세요.</p>
+    </header>
+
+    <main>
+      <section class="card hero-card" aria-labelledby="create-title">
+        <h2 id="create-title">교환 글 작성</h2>
+        <form id="tradeForm" class="form-grid">
+          <label>
+            원하는 포켓몬
+            <input type="text" id="pokemonInput" placeholder="예: 뮤츠" required />
+          </label>
+          <label>
+            위도 (latitude)
+            <input type="number" id="latInput" step="0.000001" placeholder="예: 37.5665" required />
+          </label>
+          <label>
+            경도 (longitude)
+            <input type="number" id="lngInput" step="0.000001" placeholder="예: 126.9780" required />
+          </label>
+          <label class="full-width">
+            상세 설명
+            <textarea id="descriptionInput" rows="3" placeholder="교환 가능한 시간/조건 등을 적어주세요."></textarea>
+          </label>
+          <button type="submit">교환 글 등록</button>
+        </form>
+      </section>
+
+      <section class="ad-slot" aria-label="구글 애드 영역 상단">
+        <p>Google Ad Slot (상단 공백 광고 영역)</p>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-xxxxxxxxxxxxxxxx" data-ad-slot="1234567890" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </section>
+
+      <section class="card" aria-labelledby="search-title">
+        <h2 id="search-title">검색 (포켓몬 / 좌표 반경 2km)</h2>
+        <form id="searchForm" class="form-grid">
+          <label>
+            포켓몬 이름
+            <input type="text" id="searchPokemon" placeholder="예: 피카츄" />
+          </label>
+          <label>
+            기준 위도
+            <input type="number" id="searchLat" step="0.000001" placeholder="예: 37.5665" />
+          </label>
+          <label>
+            기준 경도
+            <input type="number" id="searchLng" step="0.000001" placeholder="예: 126.9780" />
+          </label>
+          <button type="submit">검색하기</button>
+        </form>
+      </section>
+
+      <section class="ad-slot" aria-label="구글 애드 영역 하단">
+        <p>Google Ad Slot (하단 공백 광고 영역)</p>
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-xxxxxxxxxxxxxxxx" data-ad-slot="0987654321" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      </section>
+
+      <section class="card" aria-labelledby="list-title">
+        <h2 id="list-title">교환 글 목록</h2>
+        <div id="tradeList" class="trade-list"></div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
